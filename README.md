@@ -9,12 +9,8 @@
   - BackEnd 는 Ollama를 통해 로컬에서 실행되는 모델을 호출하고 정적 분석 도구와 결합
 
 ```plaintext
-/frontend
   └─ 코드 리뷰 결과 시각화 (Diff 뷰, Heatmap, 대시보드)
-
-/backend
-  └─ REST API 서버
-      └─ Ollama 모델 호출 (Code Llama)
-      └─ ESLint/SonarQube 결과 결합
-      └─ DB 관리 (리뷰 로그, 사용자 권한)
+  └─ Ollama 모델 호출 (Code Llama)
+  └─ ESLint/SonarQube 결과 결합
+  └─ 리뷰 로그, 사용자 권한
 ```
