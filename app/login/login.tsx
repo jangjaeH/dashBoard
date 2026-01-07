@@ -5,8 +5,17 @@ import { LockOutlined, UserOutlined } from '@ant-design/icons';
 
 
 export default function LoginPage() {
-    const onFinish = (values: any) => {
-        console.log('11', values);
+    const onFinish = async (values: any) => {
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(values),
+        })
+        const data = await res.json();
+            
+        console.log(data);
     };
 
     return (
