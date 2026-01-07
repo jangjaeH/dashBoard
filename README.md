@@ -1,4 +1,5 @@
-# DevInsight
+<p align="center"> <img src="./public/images/logo.png" alt="DevInsight" width="400"/> </p>
+<h5># DevInsight</h5>
 📌 프로젝트
   - Ollama를 통해 로컬에서 실행되는 Code Llama 모델을 활용하여 코드 품질 분석과 리뷰 코멘트를 자동으로 생성
 
