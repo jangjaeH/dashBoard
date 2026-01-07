@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import jwt from 'jsonwebtoken';
 
+const SECRET_KEY = process.env.JWT_SECRET
 export async function POST(req: Request) {
     const { userName, password } = await req.json();
 
@@ -13,5 +15,16 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Invalid credentials'}, { status: 401 });
     }
 
-    return NextResponse.json({ message: 'Login success' });
+    const payload = { userName };
+    const token = jwt.sign(payload, SECRET_KEY!, { expiresIn: '5h' });
+
+    const response = NextResponse.json({ message : 'Login success' });
+    response.cookies.set('token', token, {
+        httpOnly: true, 
+        secure: false, 
+        sameSite: 'strict', 
+        maxAge: 3600 * 5,
+    });
+
+    return response
 }

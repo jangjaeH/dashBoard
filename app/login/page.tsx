@@ -14,8 +14,12 @@ export default function LoginPage() {
             body: JSON.stringify(values),
         })
         const data = await res.json();
+
+        if (res.ok) {
+            localStorage.setItem('token', data.token);
+        } else {
             
-        console.log(data);
+        }
     };
 
     return (
