@@ -21,7 +21,7 @@ export default function LoginPage() {
             Cookies.set('token', data.token);
             localStorage.setItem('token', data.token);
             // router.refresh();
-            router.push('home');
+            router.replace('home');
 
             setTimeout(() => {
                 router.refresh();
