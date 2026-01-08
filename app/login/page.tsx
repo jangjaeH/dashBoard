@@ -2,9 +2,11 @@
 
 import { Form, Input, Button } from 'antd';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
-
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
+
+    const router = useRouter();
     const onFinish = async (values: any) => {
         const res = await fetch('/api/login', {
             method: 'POST',
@@ -13,10 +15,12 @@ export default function LoginPage() {
             },
             body: JSON.stringify(values),
         })
-        const data = await res.json();
 
         if (res.ok) {
+            const data = await res.json();
+            console.log('res:', data.token)
             localStorage.setItem('token', data.token);
+            router.push('home');
         } else {
             
         }
@@ -35,10 +39,10 @@ export default function LoginPage() {
                 onFinish={onFinish}
             >
                 <Form.Item
-                    name="username"
+                    name="usercode"
                     rules={[{ required: true, message: '아이디를 입력하세요!' }]}
                 >
-                    <Input prefix={<UserOutlined />} placeholder="Username" />
+                    <Input prefix={<UserOutlined />} placeholder="ID" />
                 </Form.Item>
                 <Form.Item
                     name="password"
