@@ -3,7 +3,7 @@
 import { Form, Input, Button } from 'antd';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
-
+import  Cookies  from 'js-cookie';
 export default function LoginPage() {
 
     const router = useRouter();
@@ -18,9 +18,14 @@ export default function LoginPage() {
 
         if (res.ok) {
             const data = await res.json();
-            console.log('res:', data.token)
+            Cookies.set('token', data.token);
             localStorage.setItem('token', data.token);
+            // router.refresh();
             router.push('home');
+
+            setTimeout(() => {
+                router.refresh();
+            }, 100);
         } else {
             
         }
