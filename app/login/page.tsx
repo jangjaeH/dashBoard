@@ -1,33 +1,37 @@
 'use client';
-
+import { useState } from 'react';
 import { Form, Input, Button } from 'antd';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
-import  Cookies  from 'js-cookie';
+import Cookies  from 'js-cookie';
+import CustomAlert from '@/components/alert';
 export default function LoginPage() {
 
+    const [message, setMessage] = useState<string | null>(null);
     const router = useRouter();
+
     const onFinish = async (values: any) => {
+        const params = { ...values, action: 'login' };
+
         const res = await fetch('/api/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(values),
-        })
+            body: JSON.stringify(params),
+        });
 
         if (res.ok) {
             const data = await res.json();
             Cookies.set('token', data.token);
             localStorage.setItem('token', data.token);
-            // router.refresh();
-            router.replace('home');
+            router.replace('/home');
 
             setTimeout(() => {
                 router.refresh();
             }, 100);
         } else {
-            
+            setMessage('아이디와 비밀번호를 확인하세요.');
         }
     };
 
@@ -38,6 +42,11 @@ export default function LoginPage() {
             alignItems: 'center',
             height: '100vh',
         }}>
+            <CustomAlert
+                message={message || ''}
+                type="error"
+                onClose={() => setMessage(null)}
+            />
             <Form
                 name="login_form"
                 style={{ maxWidth: 300 }}
