@@ -5,16 +5,16 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
     const token = request.cookies.get('token'); 
-    const { pathName } = request.nextUrl
+    const { pathname } = request.nextUrl
 
     // 토큰이 있는데 로그인 페이지로 이동하려고 할때
-    if (token && pathName === '/Login') {
+    if (token && pathname === '/Login') {
         return NextResponse.redirect(new URL('/home', request.url));
     }
 
     // 토큰이 없는데 로그인 페이지가 아닌 다른 페이지로 이동하려고 할때
 
-    if(!token && pathName === '/home') {
+    if(!token && pathname === '/home') {
         return NextResponse.redirect(new URL('/login', request.url));
     }
 
