@@ -17,10 +17,8 @@ export async function POST(req: NextRequest , { params } : { params: { action: s
                     'SELECT * FROM users WHERE usercode = ? AND password = ?',
                     [usercode, password]
                 )
-                if((rows as any[]).length > 0) {
-                    return NextResponse.json({ error: 'Invalid credentials'}, { status: 401 });
-                }
-                
+
+                console.log('rows', rows)
                 if((rows as any[]).length === 0) {
                     response = NextResponse.json({message: 'Login failed', token: ''}, {status: 500});
                 } else {
