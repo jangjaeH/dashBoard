@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import jwt from 'jsonwebtoken';
+import { prisma } from '@/lib/prisma';
 
 const SECRET_KEY = process.env.JWT_SECRET
 export async function POST(req: NextRequest , { params } : { params: { action: string } }) {
@@ -51,4 +52,17 @@ export async function POST(req: NextRequest , { params } : { params: { action: s
             });
             return response;
         }     
+
+        if(action == 'newid') {
+            let conn;
+            try {
+                conn = await db.getConnection();
+                
+                const {newid_usercode, newid_username, newid_password} = await req.json();
+            } catch (err: any) {
+                throw err
+            } finally {
+                if (conn) conn.end();
+            }
+        }
 }

@@ -45,6 +45,29 @@ export default function LoginPage() {
         }
     };
 
+    const onNewidFinish = async (values: any) => {
+        const params = {...values, action: 'newid'};
+        if(values.newid_password !== values.newid_password_confirm) {
+            setMessage('비밀번호와 비밀번호 확인이 일치하지 않습니다.');
+            return;
+        }
+
+        const res = await fetch('/api/newid', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(params),
+        });
+
+        if(res.ok) {
+            setMessage('회원가입이 완료되었습니다. 로그인 해주세요.');
+        } else {
+            setMessage('회원가입에 실패하였습니다. 다시 시도해주세요.');
+        }
+    }
+
+
     return (
         <div style={{
             display: 'flex',
@@ -84,24 +107,29 @@ export default function LoginPage() {
             <Modal title="Login Info" open={ismodalOpen} onOk={showModalClose} onCancel={showModalClose}>
                 <Form
                     name="newid_form"
+                    onFinish={onNewidFinish}
                 >
                     <Form.Item
                         name="newid_usercode"
+                        rules={[{ required: true, message: '아이디는 필수입력 값 입니다.' }]}
                     >
                         <Input placeholder="ID" />
                     </Form.Item>
                     <Form.Item
                         name="newid_username"
+                        rules={[{ required: true, message: '이름은 필수입력 값 입니다.' }]}
                     >
                         <Input placeholder="이름" />
                     </Form.Item>
                     <Form.Item
                         name="newid_password"
+                        rules={[{ required: true, message: '비밀번호는 필수입력 값 입니다.' }]}
                     >
                         <Input placeholder="PassWord" />
                     </Form.Item>
                     <Form.Item
                         name="newid_password_confirm"
+                        rules={[{ required: true, message: '비밀번호 확인은 필수입력 값 입니다.' }]}
                     >
                         <Input placeholder="PassWord Confirm" />
                     </Form.Item>
