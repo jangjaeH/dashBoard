@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import 'antd/dist/reset.css';
 import  Sidemenu  from "../components/layout/menu/sidemenu";
 import { Layout } from "antd";
 import { cookies } from "next/headers"; 
