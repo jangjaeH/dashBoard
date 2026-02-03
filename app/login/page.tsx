@@ -16,6 +16,7 @@ export default function LoginPage() {
     }
 
     const showModalClose = () => {
+        
         setIsModalOpen(false);
     }
 
@@ -46,6 +47,7 @@ export default function LoginPage() {
     };
 
     const onNewidFinish = async (values: any) => {
+        console.log('values', values)
         const params = {...values, action: 'newid'};
         if(values.newid_password !== values.newid_password_confirm) {
             setMessage('비밀번호와 비밀번호 확인이 일치하지 않습니다.');
@@ -104,7 +106,7 @@ export default function LoginPage() {
                 </Form.Item>
                 <Button type="link" onClick={showModal}>회원가입</Button>
             </Form> 
-            <Modal title="Login Info" open={ismodalOpen} onOk={showModalClose} onCancel={showModalClose}>
+            <Modal title="Login Info" open={ismodalOpen} onOk={onNewidFinish} onCancel={showModalClose}>
                 <Form
                     name="newid_form"
                     onFinish={onNewidFinish}

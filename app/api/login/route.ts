@@ -59,6 +59,15 @@ export async function POST(req: NextRequest , { params } : { params: { action: s
                 conn = await db.getConnection();
                 
                 const {newid_usercode, newid_username, newid_password} = await req.json();
+                
+                prisma.users.create({
+                    data: {
+                        usercode: newid_usercode,
+                        username: newid_username,
+                        password: newid_password,
+                    }
+                })
+                
             } catch (err: any) {
                 throw err
             } finally {

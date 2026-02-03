@@ -1,5 +1,5 @@
 import { PrismaMariaDb } from '@prisma/adapter-mariadb'
-import { PrismaClient } from '../src/generated/prisma' // schema의 output 경로와 맞춤
+import { PrismaClient } from '../src/generated/prisma'
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient }
 
