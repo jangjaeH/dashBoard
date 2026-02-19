@@ -24,6 +24,11 @@ const items: MenuItem[] = [
         icon: <DashboardOutlined />,
     },
     {
+        key: '/data-management',
+        label: '데이터 관리',
+        icon: <BarChartOutlined />,
+    },
+    {
         key: '/setting',
         label: 'Setting',
         icon: <SettingOutlined />,
