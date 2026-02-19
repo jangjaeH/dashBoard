@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { name, background, width, height, elements } = body
+  const { name, background, backgroundImage, width, height, elements } = body
 
   if (!name || !Array.isArray(elements)) {
     return NextResponse.json({ message: 'name/elements are required' }, { status: 400 })
@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
       background: background ?? '#ffffff',
       width: width ?? 1200,
       height: height ?? 700,
+      backgroundImage: backgroundImage ?? null,
       elements,
     },
   })
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   const body = await req.json()
-  const { id, name, background, width, height, elements } = body
+  const { id, name, background, backgroundImage, width, height, elements } = body
 
   if (!id) {
     return NextResponse.json({ message: 'id is required' }, { status: 400 })
@@ -58,6 +59,7 @@ export async function PUT(req: NextRequest) {
       ...(background ? { background } : {}),
       ...(width ? { width } : {}),
       ...(height ? { height } : {}),
+      ...(backgroundImage !== undefined ? { backgroundImage } : {}),
       ...(elements ? { elements } : {}),
     },
   })
