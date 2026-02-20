@@ -4,8 +4,8 @@ import { ChangeEvent, DragEvent, useEffect, useMemo, useRef, useState } from 're
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 type ElementType = 'shape' | 'chart'
-type ShapeKind = 'rect' | 'circle' | 'line' | 'arrow'
-type PaletteItem = 'rect' | 'circle' | 'chart' | 'line' | 'arrow'
+type ShapeKind = 'rect' | 'circle' | 'triangle' | 'diamond' | 'line' | 'arrow'
+type PaletteItem = 'rect' | 'circle' | 'triangle' | 'diamond' | 'chart' | 'line' | 'arrow'
 
 type DashboardElement = {
   id: string
@@ -47,6 +47,8 @@ const chartData = [
 const toolItems: { key: PaletteItem; icon: string; title: string }[] = [
   { key: 'rect', icon: '▭', title: '사각형' },
   { key: 'circle', icon: '◯', title: '원형' },
+  { key: 'triangle', icon: '△', title: '삼각형' },
+  { key: 'diamond', icon: '◇', title: '마름모' },
   { key: 'line', icon: '╱', title: '선' },
   { key: 'arrow', icon: '→', title: '화살표' },
   { key: 'chart', icon: '▥', title: '차트' },
@@ -117,7 +119,14 @@ const createElementFromPalette = (item: PaletteItem, x: number, y: number): Dash
     shape: item,
     width: item === 'circle' ? 140 : 210,
     height: 140,
-    label: item === 'rect' ? '사각형 지표' : '원형 지표',
+    label:
+      item === 'rect'
+        ? '사각형 지표'
+        : item === 'circle'
+          ? '원형 지표'
+          : item === 'triangle'
+            ? '삼각형 지표'
+            : '마름모 지표',
   }
 }
 
@@ -302,6 +311,67 @@ export default function Dashboard() {
     return mqttValueMap[element.dataCode] ?? `${element.value} (대기)`
   }
 
+  const shapeClipPath = (shape?: ShapeKind) => {
+    if (shape === 'triangle') return 'polygon(50% 0, 100% 100%, 0 100%)'
+    if (shape === 'diamond') return 'polygon(50% 0, 100% 50%, 50% 100%, 0 50%)'
+    return undefined
+  }
+
+  const deleteSelectedElement = () => {
+    if (!selectedId) return
+
+    updateActiveDashboard((dashboard) => ({
+      ...dashboard,
+      elements: dashboard.elements.filter((element) => element.id !== selectedId),
+    }))
+    setSelectedId(null)
+    setStatusMessage('선택 요소를 삭제했습니다.')
+  }
+
+  const duplicateSelectedElement = () => {
+    if (!selected) return
+
+    const duplicated: DashboardElement = {
+      ...selected,
+      id: crypto.randomUUID(),
+      x: Math.min(selected.x + 24, 1100),
+      y: Math.min(selected.y + 24, 620),
+    }
+
+    updateActiveDashboard((dashboard) => ({
+      ...dashboard,
+      elements: [...dashboard.elements, duplicated],
+    }))
+    setSelectedId(duplicated.id)
+    setStatusMessage('선택 요소를 복제했습니다.')
+  }
+
+  const bringSelectedToFront = () => {
+    if (!selectedId) return
+    updateActiveDashboard((dashboard) => {
+      const target = dashboard.elements.find((element) => element.id === selectedId)
+      if (!target) return dashboard
+
+      return {
+        ...dashboard,
+        elements: [...dashboard.elements.filter((element) => element.id !== selectedId), target],
+      }
+    })
+  }
+
+  const sendSelectedToBack = () => {
+    if (!selectedId) return
+    updateActiveDashboard((dashboard) => {
+      const target = dashboard.elements.find((element) => element.id === selectedId)
+      if (!target) return dashboard
+
+      return {
+        ...dashboard,
+        elements: [target, ...dashboard.elements.filter((element) => element.id !== selectedId)],
+      }
+    })
+  }
+
   return (
     <main
       style={{
@@ -429,10 +499,14 @@ export default function Dashboard() {
                     background: element.shape === 'line' || element.shape === 'arrow' ? 'transparent' : '#ffffff',
                     border: element.shape === 'line' || element.shape === 'arrow' ? 'none' : selectedId === element.id ? '2px solid #2563eb' : '1px solid #cbd5e1',
                     borderRadius: element.shape === 'circle' ? '50%' : 10,
-                    padding: element.shape === 'line' || element.shape === 'arrow' ? 0 : 10,
+                    clipPath: shapeClipPath(element.shape),
+                    padding: element.shape === 'line' || element.shape === 'arrow' ? 0 : element.shape === 'triangle' || element.shape === 'diamond' ? 20 : 10,
                     boxShadow: element.shape === 'line' || element.shape === 'arrow' ? 'none' : '0 8px 20px rgba(15, 23, 42, 0.08)',
                     overflow: 'hidden',
                     cursor: 'move',
+                    display: element.shape === 'triangle' || element.shape === 'diamond' ? 'grid' : 'block',
+                    alignContent: element.shape === 'triangle' || element.shape === 'diamond' ? 'center' : undefined,
+                    textAlign: element.shape === 'triangle' || element.shape === 'diamond' ? 'center' : undefined,
                   }}
                 >
                   {element.shape === 'line' && <div style={{ width: '100%', height: 2, background: element.textColor, marginTop: 6 }} />}
@@ -471,8 +545,38 @@ export default function Dashboard() {
 
         <aside style={{ background: '#ffffff', border: '1px solid #dbe1f5', borderRadius: 16, padding: 14, display: 'grid', gap: 10, alignContent: 'start' }}>
           <h3 style={{ margin: 0, fontSize: 15, color: '#1e293b' }}>데이터/텍스트 설정</h3>
-          {selected && selected.shape !== 'line' && selected.shape !== 'arrow' ? (
+          {selected ? (
             <>
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: 8, display: 'grid', gap: 6 }}>
+                <strong style={{ fontSize: 12, color: '#334155' }}>요소 관리</strong>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                  <button onClick={duplicateSelectedElement} style={{ height: 30, fontSize: 12 }}>
+                    복제
+                  </button>
+                  <button onClick={deleteSelectedElement} style={{ height: 30, fontSize: 12 }}>
+                    삭제
+                  </button>
+                  <button onClick={bringSelectedToFront} style={{ height: 30, fontSize: 12 }}>
+                    맨 앞으로
+                  </button>
+                  <button onClick={sendSelectedToBack} style={{ height: 30, fontSize: 12 }}>
+                    맨 뒤로
+                  </button>
+                </div>
+                <label style={{ fontSize: 12, color: '#475569', display: 'grid', gap: 4 }}>
+                  가로 크기
+                  <input type="range" min={50} max={500} value={selected.width} onChange={(event) => updateSelectedElement((element) => ({ ...element, width: Number(event.target.value) }))} />
+                  <span style={{ fontSize: 12 }}>{selected.width}px</span>
+                </label>
+                <label style={{ fontSize: 12, color: '#475569', display: 'grid', gap: 4 }}>
+                  세로 크기
+                  <input type="range" min={10} max={500} value={selected.height} onChange={(event) => updateSelectedElement((element) => ({ ...element, height: Number(event.target.value) }))} />
+                  <span style={{ fontSize: 12 }}>{selected.height}px</span>
+                </label>
+              </div>
+
+              {selected.shape !== 'line' && selected.shape !== 'arrow' && (
+                <>
               <label style={{ fontSize: 12, color: '#475569', display: 'grid', gap: 4 }}>
                 데이터 코드
                 <input value={selected.dataCode ?? ''} onChange={(event) => updateSelectedElement((element) => ({ ...element, dataCode: event.target.value }))} style={{ height: 30, border: '1px solid #cbd5e1', borderRadius: 8, padding: '0 8px', fontSize: 13 }} placeholder="예: TEMP_001" />
@@ -504,6 +608,8 @@ export default function Dashboard() {
                 글자색
                 <input type="color" value={selected.textColor} onChange={(event) => updateSelectedElement((element) => ({ ...element, textColor: event.target.value }))} style={{ width: 42, height: 30, border: '1px solid #cbd5e1', borderRadius: 8, padding: 0 }} />
               </label>
+                </>
+              )}
             </>
           ) : (
             <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>도형(사각형/원형/차트)을 선택하면 데이터 코드, 폰트, 크기, 글자색을 편집할 수 있습니다.</p>
