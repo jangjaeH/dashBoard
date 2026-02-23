@@ -1,9 +1,34 @@
 generator client {
-provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
-  previewFeatures = ["driverAdapters"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
+}
+
+model Dashboard {
+  id         String   @id @default(cuid())
+  name       String
+  background      String   @default("#ffffff")
+  backgroundImage String?
+  width      Int      @default(1200)
+  height     Int      @default(700)
+  elements   Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model DataBinding {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  topic       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model MqttValue {
+  code      String   @id
+  value     String
+  updatedAt DateTime @updatedAt
 }
