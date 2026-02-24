@@ -23,3 +23,16 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+
+.ant-modal-root,
+.ant-modal-mask,
+.ant-modal-wrap {
+  position: fixed !important;
+  inset: 0 !important;
+}
+
+.ant-modal-mask {
+  width: 100vw !important;
+  height: 100vh !important;
+}
