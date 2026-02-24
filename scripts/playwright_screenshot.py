@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Take a page screenshot with engine fallback (chromium -> firefox -> webkit).
+"""Take a page screenshot with engine fallback.
 
 Usage:
   python scripts/playwright_screenshot.py <url> <output_path>
@@ -7,13 +7,19 @@ Usage:
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
 from playwright.sync_api import Error, TimeoutError, sync_playwright
 
+ENGINES = ("firefox", "webkit", "chromium")
 
-ENGINES = ("chromium", "firefox", "webkit")
+
+def _launch(browser_type, engine: str):
+    if engine == "chromium":
+        return browser_type.launch(args=["--no-sandbox", "--disable-dev-shm-usage"])
+    return browser_type.launch()
 
 
 def main() -> int:
@@ -25,27 +31,32 @@ def main() -> int:
     output_path = Path(sys.argv[2])
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    preferred = os.getenv("PLAYWRIGHT_ENGINE")
+    engines = (preferred,) + tuple(e for e in ENGINES if e != preferred) if preferred else ENGINES
+
     last_error: Exception | None = None
 
     with sync_playwright() as p:
-        for engine in ENGINES:
-            browser_type = getattr(p, engine)
+        for engine in engines:
+            browser = None
             try:
-                browser = browser_type.launch()
+                browser_type = getattr(p, engine)
+                browser = _launch(browser_type, engine)
                 page = browser.new_page(viewport={"width": 1600, "height": 1000})
-                page.goto(url, wait_until="commit", timeout=90000)
+                page.goto(url, wait_until="domcontentloaded", timeout=90000)
                 page.wait_for_timeout(1200)
                 page.screenshot(path=str(output_path), full_page=True)
-                browser.close()
-                print(f"Screenshot saved with {engine}: {output_path}")
+                print(f"ok:{engine} -> {output_path}")
                 return 0
             except (TimeoutError, Error) as exc:
                 last_error = exc
                 print(f"[{engine}] failed: {exc}")
-                try:
-                    browser.close()  # type: ignore[name-defined]
-                except Exception:
-                    pass
+            finally:
+                if browser:
+                    try:
+                        browser.close()
+                    except Exception:
+                        pass
 
     print("All engines failed")
     if last_error:

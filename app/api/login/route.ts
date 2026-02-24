@@ -4,19 +4,35 @@ import { db } from '@/lib/db'
 import jwt from 'jsonwebtoken'
 
 type LoginBody = {
-  action: 'login' | 'logout' | 'newid'
+  action: 'login' | 'logout' | 'newid' | 'profile' | 'change-password' | 'withdraw'
   usercode?: string
   password?: string
   newid_usercode?: string
   newid_username?: string
   newid_password?: string
+  currentPassword?: string
+  newPassword?: string
 }
 
 type UserRow = {
   usercode: string
+  username?: string
+  use_yn?: string
 }
 
 const SECRET_KEY = process.env.JWT_SECRET
+
+const getUsercodeFromToken = (req: NextRequest) => {
+  const token = req.cookies.get('token')?.value
+  if (!token || !SECRET_KEY) return null
+
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY) as { usercode?: string }
+    return decoded.usercode ?? null
+  } catch {
+    return null
+  }
+}
 
 export async function POST(req: NextRequest) {
   const body = (await req.json()) as LoginBody
@@ -29,8 +45,8 @@ export async function POST(req: NextRequest) {
     const conn = await db.getConnection()
     try {
       const [rows] = await conn.query(
-        'SELECT usercode FROM users WHERE usercode = ? AND password = ? LIMIT 1',
-        [body.usercode, body.password],
+        'SELECT usercode FROM users WHERE usercode = ? AND password = ? AND use_yn = ? LIMIT 1',
+        [body.usercode, body.password, 'Y'],
       )
 
       const userRows = rows as UserRow[]
@@ -80,13 +96,78 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: 'duplicated usercode' }, { status: 409 })
       }
 
-      await conn.query('INSERT INTO users (usercode, username, password) VALUES (?, ?, ?)', [
+      await conn.query('INSERT INTO users (usercode, username, password, use_yn) VALUES (?, ?, ?, ?)', [
         body.newid_usercode,
         body.newid_username,
         body.newid_password,
+        'Y',
       ])
 
       return NextResponse.json({ message: 'Signup success' }, { status: 201 })
+    } finally {
+      conn.release()
+    }
+  }
+
+  if (body.action === 'profile') {
+    const usercode = getUsercodeFromToken(req)
+    if (!usercode) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
+    const conn = await db.getConnection()
+    try {
+      const [rows] = await conn.query('SELECT usercode, username, use_yn FROM users WHERE usercode = ? LIMIT 1', [usercode])
+      const user = (rows as UserRow[])[0]
+      if (!user) {
+        return NextResponse.json({ message: 'Not found' }, { status: 404 })
+      }
+      return NextResponse.json(user)
+    } finally {
+      conn.release()
+    }
+  }
+
+  if (body.action === 'change-password') {
+    const usercode = getUsercodeFromToken(req)
+    if (!usercode || !body.currentPassword || !body.newPassword) {
+      return NextResponse.json({ message: 'Invalid request' }, { status: 400 })
+    }
+
+    const conn = await db.getConnection()
+    try {
+      const [rows] = await conn.query(
+        'SELECT usercode FROM users WHERE usercode = ? AND password = ? AND use_yn = ? LIMIT 1',
+        [usercode, body.currentPassword, 'Y'],
+      )
+
+      if ((rows as UserRow[]).length === 0) {
+        return NextResponse.json({ message: '현재 비밀번호가 일치하지 않습니다.' }, { status: 400 })
+      }
+
+      await conn.query('UPDATE users SET password = ? WHERE usercode = ?', [body.newPassword, usercode])
+      return NextResponse.json({ message: '비밀번호가 변경되었습니다.' })
+    } finally {
+      conn.release()
+    }
+  }
+
+  if (body.action === 'withdraw') {
+    const usercode = getUsercodeFromToken(req)
+    if (!usercode) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
+    const conn = await db.getConnection()
+    try {
+      await conn.query('UPDATE users SET use_yn = ? WHERE usercode = ?', ['N', usercode])
+      const response = NextResponse.json({ message: '탈퇴 처리되었습니다.' })
+      response.cookies.set('token', '', {
+        httpOnly: true,
+        expires: new Date(0),
+        path: '/',
+      })
+      return response
     } finally {
       conn.release()
     }
